@@ -1,3 +1,5 @@
+import 'package:debt_plus/screens/analytics_page.dart';
+import 'package:debt_plus/screens/pay_debt_page.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -81,9 +83,9 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text("Total Debts Overview", style: TextStyle(color: Colors.white, fontSize: 18)),
+                          Text("Total Debts Overview", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                           SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -164,7 +166,10 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
                   ListTile(
                     leading: Icon(Icons.bar_chart, color: Colors.blueAccent),
                     title: Text("Analytics"),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => AnalyticsPage()));
+                    },
                   ),
                 ],
               ),
@@ -176,7 +181,7 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
     );
   }
 
-  Widget debtCard(Debt debt, dynamic key, {bool isPastDebt = false}) {
+  Widget debtCard(Debt debt, dynamic key, BuildContext context, {bool isPastDebt = false}) {
     return Card(
       key: ValueKey(key),
       elevation: 3,
@@ -184,13 +189,29 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
         leading: Icon(Icons.person, color: Colors.blueAccent),
         title: Text(debt.name, style: TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text("${debt.purpose} • Due: ${debt.dueDate}"),
-        trailing: Text(
-          "RM ${debt.amount.toStringAsFixed(2)}",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: debt.isOwedToMe ? Colors.green : Colors.redAccent,
-          ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "RM ${debt.amount.toStringAsFixed(2)}",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: debt.isOwedToMe ? Colors.green : Colors.redAccent,
+              ),
+            ),
+            SizedBox(width: 10),
+            if (!debt.isCompleted)
+              IconButton(
+                icon: Icon(Icons.payment, color: Colors.blue),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PayDebtPage(debt: debt, debtKey: key)),
+                  );
+                },
+              ),
+          ],
         ),
         onLongPress: isPastDebt
             ? () {
@@ -199,7 +220,9 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text("Delete Debt?"),
-                content: Text("Are you sure you want to delete the debt to ${debt.name} for RM ${debt.amount.toStringAsFixed(2)}? This action is irreversible."),
+                content: Text(
+                  "Are you sure you want to delete the debt to ${debt.name} for RM ${debt.amount.toStringAsFixed(2)}? This action is irreversible.",
+                ),
                 actions: <Widget>[
                   TextButton(
                     child: Text("Cancel"),
@@ -220,13 +243,14 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
           );
         }
             : () {
-          print("Long press detected on debt card: ${debt.name}, Key: $key");
           showDialog(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text("Settle Debt?"),
-                content: Text("Mark debt to ${debt.name} for RM ${debt.amount.toStringAsFixed(2)} as settled?"),
+                content: Text(
+                  "Mark debt to ${debt.name} for RM ${debt.amount.toStringAsFixed(2)} as settled?",
+                ),
                 actions: <Widget>[
                   TextButton(
                     child: Text("Cancel"),
@@ -249,6 +273,7 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
       ),
     );
   }
+
 
   void _markAsCompleted(dynamic key) {
     final debtBox = Hive.box<Debt>('debts');

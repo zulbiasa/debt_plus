@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
+import '../main.dart';
 import '../models/debt.dart';
+import '../models/installment.dart';
+import 'package:intl/intl.dart';
 
 class AddDebtPage extends StatefulWidget {
   @override
@@ -10,188 +12,243 @@ class AddDebtPage extends StatefulWidget {
 
 class _AddDebtPageState extends State<AddDebtPage> {
   final _formKey = GlobalKey<FormState>();
-  late Box<Debt> debtBox;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _dueDateController = TextEditingController();
   final TextEditingController _purposeController = TextEditingController();
+  final TextEditingController _monthsController = TextEditingController();
 
-  DateTime? _selectedDate;
   bool _isOwedToMe = false;
+  bool _isInstallment = false;
+  List<Installment> _installments = [];
+  List<String> _suggestedNames = []; // Store name suggestions
 
-  List<String> _matchingNames = []; // Store filtered names
+  Future<void> _pickDueDate(BuildContext context) async {
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
 
-  @override
-  void initState() {
-    super.initState();
-    _openBox();
-    _nameController.addListener(_filterNames); // Listen for name changes
+    if (selectedDate != null) {
+      setState(() {
+        _dueDateController.text = formatDate(selectedDate.toIso8601String());
+      });
+    }
   }
 
-  @override
-  void dispose() {
-    _nameController.removeListener(_filterNames);
-    _nameController.dispose();
-    _amountController.dispose();
-    _purposeController.dispose();
-    super.dispose();
-  }
-
-  void _openBox() async {
-    debtBox = await Hive.openBox<Debt>('debts');
-    setState(() {});
-  }
-
-  void _filterNames() {
-    final input = _nameController.text.toLowerCase();
-
+  void _fetchNameSuggestions(String input) {
     if (input.isEmpty) {
       setState(() {
-        _matchingNames = [];
+        _suggestedNames = [];
       });
       return;
     }
 
-    final pastNames = debtBox.values.map((debt) => debt.name).toSet().toList();
+    final debtBox = Hive.box<Debt>('debts');
+    final names = debtBox.values.map((debt) => debt.name).toSet().toList();
 
     setState(() {
-      _matchingNames = pastNames
-          .where((name) => name.toLowerCase().contains(input))
+      _suggestedNames = names
+          .where((name) => name.toLowerCase().startsWith(input.toLowerCase()))
           .toList();
     });
   }
 
-  Future<void> _pickDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
+  void _generateInstallments(int months) {
+    _installments.clear();
+    if (months <= 0) return;
+
+    DateTime startDate = DateTime.now();
+
+    for (int i = 0; i < months; i++) {
+      DateTime dueDate = DateTime(startDate.year, startDate.month + i + 1, startDate.day);
+      _installments.add(Installment(amount: 0.0, dueDate: DateFormat('dd/MM/yyyy').format(dueDate)));
     }
+
+    setState(() {});
   }
 
-  void _addDebt() {
-    if (_formKey.currentState!.validate() && _selectedDate != null) {
+  void _submitDebt() async {
+    if (_formKey.currentState!.validate()) {
+      double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+
       final newDebt = Debt(
         name: _nameController.text,
-        amount: double.parse(_amountController.text),
-        dueDate: DateFormat('dd MMM yyyy').format(_selectedDate!),
+        amount: totalAmount,
+        dueDate: _dueDateController.text,
         purpose: _purposeController.text,
         isOwedToMe: _isOwedToMe,
         isCompleted: false,
+        isInstallment: _isInstallment,
+        installments: _isInstallment ? _installments : null,
+        paidAmount: 0.0,
       );
 
-      debtBox.add(newDebt);
+      final debtBox = Hive.box<Debt>('debts');
+      await debtBox.add(newDebt);
+
       Navigator.pop(context);
     }
   }
 
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+    Function(String)? onChanged,
+    bool readOnly = false,
+    VoidCallback? onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        readOnly: readOnly,
+        onTap: onTap,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+        ),
+        validator: (value) => value!.isEmpty ? "Enter $label" : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Add Debt"),
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: "To Whom",
-                  suffixIcon: _matchingNames.isNotEmpty
-                      ? Icon(Icons.search, color: Colors.grey)
-                      : null,
-                ),
-                validator: (value) => value!.isEmpty ? "Enter name" : null,
-              ),
-              if (_matchingNames.isNotEmpty)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey),
-                  ),
-                  child: Column(
-                    children: _matchingNames.map((name) {
-                      return ListTile(
-                        title: Text(name),
-                        onTap: () {
-                          _nameController.text = name;
-                          setState(() {
-                            _matchingNames = [];
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-              TextFormField(
-                controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: "Amount (RM)"),
-                validator: (value) => value!.isEmpty ? "Enter amount" : null,
-              ),
-              SizedBox(height: 15),
-              Text("Due Date", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              InkWell(
-                onTap: () => _pickDate(context),
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  margin: EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    _selectedDate == null ? "Select Due Date" : DateFormat('dd MMM yyyy').format(_selectedDate!),
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-              SizedBox(height: 15),
-              TextFormField(
-                controller: _purposeController,
-                decoration: InputDecoration(labelText: "Purpose"),
-                validator: (value) => value!.isEmpty ? "Enter purpose" : null,
-              ),
-              SizedBox(height: 15),
-              Row(
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+        setState(() {
+          _suggestedNames.clear();
+        });
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Add New Debt"),
+          backgroundColor: Colors.blueAccent,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Is this money owed to you?", style: TextStyle(fontSize: 16)),
-                  Spacer(),
-                  Switch(
+                  // 📌 Autocomplete for Name
+                  _buildTextField(
+                    label: "Name",
+                    controller: _nameController,
+                    onChanged: _fetchNameSuggestions,
+                  ),
+                  if (_suggestedNames.isNotEmpty)
+                    Container(
+                      constraints: BoxConstraints(maxHeight: 200),
+                      margin: EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                        color: Colors.white,
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _suggestedNames.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            title: Text(_suggestedNames[index]),
+                            onTap: () {
+                              setState(() {
+                                _nameController.text = _suggestedNames[index];
+                                _suggestedNames.clear();
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+
+                  _buildTextField(
+                    label: "Total Amount (RM)",
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                  ),
+
+                  _buildTextField(
+                    label: "Due Date",
+                    controller: _dueDateController,
+                    readOnly: true,
+                    onTap: () => _pickDueDate(context),
+                  ),
+
+                  _buildTextField(
+                    label: "Purpose",
+                    controller: _purposeController,
+                  ),
+
+                  SwitchListTile(
+                    title: Text("Is this debt owed to me?"),
                     value: _isOwedToMe,
-                    onChanged: (value) {
+                    onChanged: (bool value) {
                       setState(() {
                         _isOwedToMe = value;
                       });
                     },
                   ),
+
+                  SwitchListTile(
+                    title: Text("Use Installment Plan?"),
+                    value: _isInstallment,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _isInstallment = value;
+                        if (!_isInstallment) _installments.clear();
+                      });
+                    },
+                  ),
+
+                  if (_isInstallment)
+                    Column(
+                      children: [
+                        _buildTextField(
+                          label: "Number of Months",
+                          controller: _monthsController,
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            int months = int.tryParse(value) ?? 0;
+                            _generateInstallments(months);
+                          },
+                        ),
+
+                        ..._installments.map((installment) {
+                          return ListTile(
+                            title: Text("Due Date: ${installment.dueDate}"),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+
+                  SizedBox(height: 20),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: _submitDebt,
+                      child: Text("Add Debt"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _addDebt,
-                  child: Text("Save Debt"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

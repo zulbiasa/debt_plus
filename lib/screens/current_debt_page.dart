@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/debt.dart';
 import 'dashboard_page.dart';
+import 'pay_debt_page.dart';
 
 class CurrentDebtPage extends StatelessWidget {
   final DashboardPageState dashboardPageState;
@@ -25,8 +26,8 @@ class CurrentDebtPage extends StatelessWidget {
 
         final debtsByDate = <String, List<Debt>>{};
         for (var debt in activeDebts) {
-          if (debt.dueDate != null) {
-            debtsByDate.putIfAbsent(debt.dueDate!, () => []).add(debt);
+          if (debt.dueDate.isNotEmpty) {
+            debtsByDate.putIfAbsent(debt.dueDate, () => []).add(debt);
           } else {
             debtsByDate.putIfAbsent("No Due Date", () => []).add(debt);
           }
@@ -65,9 +66,8 @@ class CurrentDebtPage extends StatelessWidget {
 
                     return Dismissible(
                       key: Key(debtKey.toString()),
-                      direction: DismissDirection.startToEnd, // Swipe left to right
+                      direction: DismissDirection.startToEnd,
                       onDismissed: (direction) {
-                        // Mark as settled and update Hive
                         final updatedDebt = Debt(
                           name: debt.name,
                           amount: debt.amount,
@@ -84,7 +84,7 @@ class CurrentDebtPage extends StatelessWidget {
                         color: Colors.green,
                         child: Icon(Icons.check, color: Colors.white, size: 32),
                       ),
-                      child: dashboardPageState.debtCard(debt, debtKey),
+                      child: dashboardPageState.debtCard(debt, debtKey, context),
                     );
                   },
                 ),

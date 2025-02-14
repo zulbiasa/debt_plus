@@ -18,6 +18,7 @@ class _AddDebtPageState extends State<AddDebtPage> {
   final TextEditingController _dueDateController = TextEditingController();
   final TextEditingController _purposeController = TextEditingController();
   final TextEditingController _monthsController = TextEditingController();
+  final TextEditingController _interestController = TextEditingController();
 
   bool _isOwedToMe = false;
   bool _isInstallment = false;
@@ -61,19 +62,31 @@ class _AddDebtPageState extends State<AddDebtPage> {
     _installments.clear();
     if (months <= 0) return;
 
+    double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    double interestRate = double.tryParse(_interestController.text) ?? 0.0;
+    double totalWithInterest = totalAmount + (totalAmount * (interestRate / 100));
+    double monthlyPayment = totalWithInterest / months;
+
     DateTime startDate = DateTime.now();
 
     for (int i = 0; i < months; i++) {
       DateTime dueDate = DateTime(startDate.year, startDate.month + i + 1, startDate.day);
-      _installments.add(Installment(amount: 0.0, dueDate: DateFormat('dd/MM/yyyy').format(dueDate)));
+      _installments.add(Installment(
+        amount: monthlyPayment,
+        dueDate: DateFormat('dd/MM/yyyy').format(dueDate),
+      ));
     }
 
     setState(() {});
   }
 
+
+
   void _submitDebt() async {
     if (_formKey.currentState!.validate()) {
-      double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+      double amount = double.tryParse(_amountController.text) ?? 0.0;
+      double interestRate = double.tryParse(_interestController.text) ?? 0.0;
+      double totalAmount = amount + (amount * (interestRate / 100));
 
       final newDebt = Debt(
         name: _nameController.text,
@@ -83,7 +96,6 @@ class _AddDebtPageState extends State<AddDebtPage> {
         isOwedToMe: _isOwedToMe,
         isCompleted: false,
         isInstallment: _isInstallment,
-        installments: _isInstallment ? _installments : null,
         paidAmount: 0.0,
       );
 
@@ -93,6 +105,7 @@ class _AddDebtPageState extends State<AddDebtPage> {
       Navigator.pop(context);
     }
   }
+
 
   Widget _buildTextField({
     required String label,
@@ -228,11 +241,19 @@ class _AddDebtPageState extends State<AddDebtPage> {
                           },
                         ),
 
+                        _buildTextField(
+                          label: "Interest Rate (%)",
+                          controller: _interestController,
+                          keyboardType: TextInputType.number,
+                        ),
+
+
                         ..._installments.map((installment) {
                           return ListTile(
                             title: Text("Due Date: ${installment.dueDate}"),
                           );
                         }).toList(),
+
                       ],
                     ),
 

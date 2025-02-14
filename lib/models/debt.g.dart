@@ -23,8 +23,10 @@ class DebtAdapter extends TypeAdapter<Debt> {
       purpose: fields[3] as String,
       isOwedToMe: fields[4] as bool,
       isCompleted: fields[5] as bool,
-      isInstallment: fields[6] == null ? false : fields[6] as bool,
-      installments: (fields[7] as List?)?.cast<Installment>(),
+      isInstallment: fields[6] as bool,
+      paymentHistory: (fields[7] as List?)
+          ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
+          ?.toList(),
       paidAmount: fields[8] as double,
     );
   }
@@ -48,7 +50,7 @@ class DebtAdapter extends TypeAdapter<Debt> {
       ..writeByte(6)
       ..write(obj.isInstallment)
       ..writeByte(7)
-      ..write(obj.installments)
+      ..write(obj.paymentHistory)
       ..writeByte(8)
       ..write(obj.paidAmount);
   }

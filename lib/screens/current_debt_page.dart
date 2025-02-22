@@ -70,11 +70,12 @@ class CurrentDebtPage extends StatelessWidget {
                       onDismissed: (direction) {
                         final updatedDebt = Debt(
                           name: debt.name,
-                          amount: debt.amount,
+                          amount: debt.originalAmount,
                           dueDate: debt.dueDate,
                           purpose: debt.purpose,
                           isOwedToMe: debt.isOwedToMe,
                           isCompleted: true,
+                          originalAmount: debt.originalAmount,
                         );
                         box.put(debtKey, updatedDebt);
                       },

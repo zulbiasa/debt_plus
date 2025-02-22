@@ -28,13 +28,14 @@ class DebtAdapter extends TypeAdapter<Debt> {
           ?.map((dynamic e) => (e as Map).cast<String, dynamic>())
           ?.toList(),
       paidAmount: fields[8] as double,
+      originalAmount: fields[9] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, Debt obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -52,7 +53,9 @@ class DebtAdapter extends TypeAdapter<Debt> {
       ..writeByte(7)
       ..write(obj.paymentHistory)
       ..writeByte(8)
-      ..write(obj.paidAmount);
+      ..write(obj.paidAmount)
+      ..writeByte(9)
+      ..write(obj.originalAmount);
   }
 
   @override

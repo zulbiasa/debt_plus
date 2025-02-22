@@ -193,7 +193,7 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              "RM ${debt.amount.toStringAsFixed(2)}",
+              "RM ${isPastDebt ? debt.originalAmount.toStringAsFixed(2) : debt.amount.toStringAsFixed(2)}",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

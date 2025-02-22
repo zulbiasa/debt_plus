@@ -63,6 +63,8 @@ class _PayDebtPageState extends State<PayDebtPage> {
             children: [
               Text("Debt to: ${widget.debt.name}",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("Original Amount: RM ${widget.debt.originalAmount.toStringAsFixed(2)}", // Display original amount
+                  style: TextStyle(fontSize: 16, color: Colors.grey)), // Style as needed
               Text("Total Remaining: RM ${widget.debt.amount.toStringAsFixed(2)}",
                   style: TextStyle(fontSize: 16)),
               Text("Total Paid: RM ${widget.debt.paidAmount.toStringAsFixed(2)}",
@@ -103,7 +105,7 @@ class _PayDebtPageState extends State<PayDebtPage> {
 
               SizedBox(height: 30),
 
-              // Debt Payment Graph
+              // Debt Payment Graph (No changes needed here for this feature)
               Text("Debt Payment Projection",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               SizedBox(height: 20),

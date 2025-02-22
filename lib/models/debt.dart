@@ -31,6 +31,9 @@ class Debt extends HiveObject {
   @HiveField(8)
   double paidAmount;
 
+  @HiveField(9)
+  double originalAmount; // Add this field to store the original amount
+
   Debt({
     required this.name,
     required this.amount,
@@ -41,5 +44,6 @@ class Debt extends HiveObject {
     this.isInstallment = false,
     this.paymentHistory,
     this.paidAmount = 0,
-  });
+    required this.originalAmount, // Initialize originalAmount in constructor
+  }); // Ensure originalAmount is set correctly initially
 }

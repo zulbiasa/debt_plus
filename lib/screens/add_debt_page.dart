@@ -97,6 +97,7 @@ class _AddDebtPageState extends State<AddDebtPage> {
         isCompleted: false,
         isInstallment: _isInstallment,
         paidAmount: 0.0,
+        originalAmount: totalAmount,
       );
 
       final debtBox = Hive.box<Debt>('debts');

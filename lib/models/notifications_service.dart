@@ -16,7 +16,7 @@ class NotiService {
 
   //INITIALIZED
   Future<void> initNotification() async {
-    if (_isInitialized) return; //prevent re-initialization
+    if (_isInitialized == true) return; //prevent re-initialization
 
     //init timezone handling
     tz.initializeTimeZones();

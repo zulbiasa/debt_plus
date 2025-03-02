@@ -17,7 +17,6 @@ void main() async {
   final appDocumentDir = await path_provider.getApplicationDocumentsDirectory();
   Hive.init(appDocumentDir.path);
   Hive.registerAdapter(DebtAdapter());
-  Hive.registerAdapter(InstallmentAdapter());
   Hive.registerAdapter(ReminderAdapter());
 
   await Hive.openBox<Debt>('debts');

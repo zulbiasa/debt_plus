@@ -93,15 +93,15 @@ class _RemindersPageState extends State<RemindersPage> {
         trailing: IconButton(
           icon: Icon(Icons.delete, color: Colors.redAccent),
           onPressed: () {
-            _deleteReminder(index, reminder);
+            _deleteReminder(index, reminder, reminder.key);
           },
         ),
       ),
     );
   }
 
-  void _deleteReminder(int index, Reminder reminder) async {
-    NotiService().cancelAllNoti();
+  void _deleteReminder(int index, Reminder reminder, int id) async {
+    NotiService().cancelNoti(id);
     await reminderBox.deleteAt(index);
   }
 }

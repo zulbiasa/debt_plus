@@ -105,6 +105,7 @@ class NotiService {
       title,
       body,
       notificationDetails(),
+
     );
   }
 
@@ -115,6 +116,7 @@ class NotiService {
     required String body,
     required int hour,
     required int minute,
+    String? repeatType,
   }) async {
     //Get current date/time in device's local timezone
     final now = tz.TZDateTime.now(tz.local);
@@ -128,6 +130,13 @@ class NotiService {
       hour,
       minute,
     );
+
+    DateTimeComponents? matchComponents;
+    if (repeatType == "Daily") {
+      matchComponents = DateTimeComponents.time;
+    } else if (repeatType == "Monthly") {
+      matchComponents = DateTimeComponents.dayOfMonthAndTime;
+    }
 
     await notificationsPlugin.zonedSchedule(
       id,
@@ -144,14 +153,14 @@ class NotiService {
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
 
       //if want... use this to repeat notification
-      //matchDateTimeComponents: DateTimeComponents.time,
+      matchDateTimeComponents: matchComponents,
     );
     print('Notification scheduled for $scheduledDate');
   }
 
   //Cancel all Notification
-  Future<void> cancelAllNoti() async {
-    await notificationsPlugin.cancelAll();
+  Future<void> cancelNoti(id) async {
+    await notificationsPlugin.cancel(id);
   }
 
   //ON NOTI TAP

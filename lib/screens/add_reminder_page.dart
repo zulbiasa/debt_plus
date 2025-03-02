@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart'; // Import HiveFlutter for Flutter
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/notifications_service.dart';
-import '../models/reminder.dart'; // Import Reminder model
+import '../models/reminder.dart';
 import 'package:intl/intl.dart';
 
 class AddReminderPage extends StatefulWidget {
@@ -13,16 +13,17 @@ class _AddReminderPageState extends State<AddReminderPage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController _messageController = TextEditingController();
   DateTime _selectedDateTime = DateTime.now();
-  TextEditingController _debtNameController = TextEditingController(); // For optional debt name
+  TextEditingController _debtNameController = TextEditingController();
 
-  final NotiService notiService = NotiService(); // Instance of Notification Service
+  String _repeatType = "Does Not Repeat"; // Default repeat type
+
+  final NotiService notiService = NotiService();
 
   @override
   void initState() {
     super.initState();
-    notiService.initNotification(); // Initialize notification service
+    notiService.initNotification();
   }
-
 
   Future<void> _selectDateTime(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
@@ -56,28 +57,28 @@ class _AddReminderPageState extends State<AddReminderPage> {
       final reminderBox = Hive.box<Reminder>('reminders');
 
       Reminder newReminder = Reminder(
-        debtName: _debtNameController.text.trim(), // Optional debt name
+        debtName: _debtNameController.text.trim(),
         reminderDateTime: _selectedDateTime,
         message: _messageController.text.trim(),
       );
 
       await reminderBox.add(newReminder);
 
-      // Schedule Notification
-      await notiService.requestPermissions(); // Request permissions before scheduling
+      await notiService.requestPermissions();
       await notiService.scheduleNotification(
-        id: newReminder.key as int? ?? DateTime.now().millisecondsSinceEpoch, // Use Hive key or generate unique ID
-        title: _debtNameController.text.isNotEmpty ? 'Debt Reminder: ${_debtNameController.text.trim()}' : 'Reminder',
+        id: newReminder.key as int? ?? DateTime.now().millisecondsSinceEpoch,
+        title: _debtNameController.text.isNotEmpty
+            ? 'Debt Reminder: ${_debtNameController.text.trim()}'
+            : 'Reminder',
         body: _messageController.text.trim(),
         hour: _selectedDateTime.hour,
         minute: _selectedDateTime.minute,
+        repeatType: _repeatType , // Pass repeat type
       );
 
-
-      Navigator.pop(context); // Go back to RemindersPage
+      Navigator.pop(context);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +92,9 @@ class _AddReminderPageState extends State<AddReminderPage> {
             children: <Widget>[
               TextFormField(
                 controller: _messageController,
-                decoration: InputDecoration(labelText: 'Reminder Message', border: OutlineInputBorder()),
+                decoration: InputDecoration(
+                    labelText: 'Reminder Message',
+                    border: OutlineInputBorder()),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a reminder message';
@@ -102,8 +105,9 @@ class _AddReminderPageState extends State<AddReminderPage> {
               SizedBox(height: 20),
               TextFormField(
                 controller: _debtNameController,
-                decoration: InputDecoration(labelText: 'Optional Debt Name (if related)', border: OutlineInputBorder()),
-                // No validator needed as debt name is optional
+                decoration: InputDecoration(
+                    labelText: 'Optional Debt Name (if related)',
+                    border: OutlineInputBorder()),
               ),
               SizedBox(height: 20),
               Row(
@@ -118,6 +122,22 @@ class _AddReminderPageState extends State<AddReminderPage> {
                     child: Text("Pick Date & Time"),
                   ),
                 ],
+              ),
+              SizedBox(height: 20),
+              DropdownButtonFormField<String>(
+                value: _repeatType,
+                decoration: InputDecoration(labelText: "Repeat"),
+                items: ["Does Not Repeat", "Daily", "Monthly"]
+                    .map((repeatOption) => DropdownMenuItem(
+                  value: repeatOption,
+                  child: Text(repeatOption),
+                ))
+                    .toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _repeatType = newValue!;
+                  });
+                },
               ),
               SizedBox(height: 30),
               ElevatedButton(

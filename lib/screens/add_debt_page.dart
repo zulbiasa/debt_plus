@@ -130,6 +130,7 @@ class _AddDebtPageState extends State<AddDebtPage> {
           body: 'Due today RM : ${totalAmount} for ${_purposeController.text}',
           hour: 10, // Midnight
           minute: 0,
+          repeatType: 'Does Not Repeat',
         );
         print('Notification scheduled for due date: ${DateFormat('dd/MM/yyyy').format(parsedDueDate)}');
       }

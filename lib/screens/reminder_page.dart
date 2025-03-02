@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:debt_plus/models/notifications_service.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
@@ -100,13 +101,7 @@ class _RemindersPageState extends State<RemindersPage> {
   }
 
   void _deleteReminder(int index, Reminder reminder) async {
+    NotiService().cancelAllNoti();
     await reminderBox.deleteAt(index);
-    try {
-      // Attempt to cancel Workmanager tasks by name (may cancel all with same name)
-      print('Workmanager tasks cancelled (by tag "debtReminderTask")');
-    } catch (e) {
-      print('Error cancelling Workmanager tasks: $e');
-    }
-    // No need to cancel local notification separately, as it's triggered by Workmanager task
   }
 }

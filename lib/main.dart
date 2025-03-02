@@ -1,23 +1,31 @@
+import 'package:debt_plus/models/notifications_service.dart';
 import 'package:debt_plus/screens/dashboard_page.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart' as path_provider; // Import path_provider with alias
 import 'models/debt.dart';
-import 'models/installment.dart'; // Import your Debt model
+import 'models/installment.dart'; // Import your Installment model
 import 'package:intl/intl.dart';
+import 'models/reminder.dart'; // Import timezone
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
 
-  final appDocumentDir = await getApplicationDocumentsDirectory(); // Get app directory
-  Hive.init(appDocumentDir.path); // Initialize Hive
+  NotiService().initNotification();
+  NotiService().requestPermissions();
 
-  Hive.registerAdapter(DebtAdapter()); // Register the adapter
+  final appDocumentDir = await path_provider.getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+  Hive.registerAdapter(DebtAdapter());
   Hive.registerAdapter(InstallmentAdapter());
-  await Hive.openBox<Debt>('debts'); // Open the box before running app
+  Hive.registerAdapter(ReminderAdapter());
+
+  await Hive.openBox<Debt>('debts');
+  await Hive.openBox<Reminder>('reminders');
 
   runApp(MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   @override

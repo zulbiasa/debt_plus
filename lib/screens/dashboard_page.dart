@@ -1,5 +1,6 @@
 import 'package:debt_plus/screens/analytics_page.dart';
 import 'package:debt_plus/screens/pay_debt_page.dart';
+import 'package:debt_plus/screens/reminder_page.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -161,7 +162,10 @@ class DashboardPageState extends State<DashboardPage> with SingleTickerProviderS
                   ListTile(
                     leading: Icon(Icons.notifications, color: Colors.blueAccent),
                     title: Text("Reminders"),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pop(context); // Close bottom sheet
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => RemindersPage())); // Navigate to RemindersPage
+                    },
                   ),
                   ListTile(
                     leading: Icon(Icons.bar_chart, color: Colors.blueAccent),

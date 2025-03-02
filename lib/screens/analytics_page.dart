@@ -11,6 +11,7 @@ class AnalyticsPage extends StatefulWidget {
 class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Box<Debt> debtBox;
+  bool _isBoxOpen = false; // Add a flag to track box open status
 
   @override
   void initState() {
@@ -21,7 +22,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
 
   void _openBox() async {
     debtBox = await Hive.openBox<Debt>('debts');
-    setState(() {});
+    setState(() {
+      _isBoxOpen = true; // Set the flag to true after box is opened
+    });
   }
 
   @override
@@ -55,7 +58,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
   }
 
   Widget _buildAnalytics(bool isPast) {
-    if (!debtBox.isOpen) {
+    if (!_isBoxOpen) { // Check the flag instead of debtBox.isOpen directly in build method
       return Center(child: CircularProgressIndicator());
     }
 
@@ -101,6 +104,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
   }
 
   Widget _buildPieChart(double owedToMe, double owedByMe) {
+    if (!_isBoxOpen) { // Add check here as well, though it should be already loaded by this point
+      return Center(child: CircularProgressIndicator());
+    }
     if (owedToMe == 0 && owedByMe == 0) {
       return Center(child: Text("No debt data available for chart"));
     }
@@ -116,17 +122,17 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
               sections: [
                 if (owedToMe > 0)
                   PieChartSectionData(
-                    value: owedToMe,
-                    color: Colors.green,
-                    radius: 50,
-                    showTitle: false
+                      value: owedToMe,
+                      color: Colors.green,
+                      radius: 50,
+                      showTitle: false
                   ),
                 if (owedByMe > 0)
                   PieChartSectionData(
-                    value: owedByMe,
-                    color: Colors.red,
-                    radius: 50,
-                    showTitle: false
+                      value: owedByMe,
+                      color: Colors.red,
+                      radius: 50,
+                      showTitle: false
                   ),
               ],
               sectionsSpace: 2,
@@ -159,6 +165,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> with SingleTickerProvider
   }
 
   Widget _buildTopPeople(String title, Map<String, double> people) {
+    if (!_isBoxOpen) { // Add check here as well for safety
+      return Center(child: CircularProgressIndicator());
+    }
     final sortedPeople = people.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 

@@ -4,6 +4,7 @@ import '../main.dart';
 import '../models/debt.dart';
 import '../models/installment.dart';
 import 'package:intl/intl.dart';
+import '../models/notifications_service.dart';
 
 class AddDebtPage extends StatefulWidget {
   @override
@@ -24,6 +25,15 @@ class _AddDebtPageState extends State<AddDebtPage> {
   bool _isInstallment = false;
   List<Installment> _installments = [];
   List<String> _suggestedNames = []; // Store name suggestions
+
+  final NotiService notiService = NotiService(); // Instance of Notification Service
+
+  @override
+  void initState() {
+    super.initState();
+    notiService.initNotification(); // Initialize notification service
+  }
+
 
   Future<void> _pickDueDate(BuildContext context) async {
     DateTime? selectedDate = await showDatePicker(
@@ -102,6 +112,28 @@ class _AddDebtPageState extends State<AddDebtPage> {
 
       final debtBox = Hive.box<Debt>('debts');
       await debtBox.add(newDebt);
+
+      // Schedule Notification for Due Date
+      await notiService.requestPermissions(); // Request permissions before scheduling
+      DateTime? parsedDueDate;
+      try {
+        parsedDueDate = DateFormat('dd/MM/yyyy').parse(_dueDateController.text);
+      } catch (e) {
+        print("Error parsing due date: $e");
+        parsedDueDate = null; // Handle parsing error if needed
+      }
+
+      if (parsedDueDate != null) {
+        await notiService.scheduleNotification(
+          id: newDebt.key as int? ?? DateTime.now().millisecondsSinceEpoch, // Unique ID
+          title: 'Debt Due Reminder : ${_nameController.text}',
+          body: 'Due today RM : ${totalAmount} for ${_purposeController.text}',
+          hour: 11, // Midnight
+          minute: 8,
+        );
+        print('Notification scheduled for due date: ${DateFormat('dd/MM/yyyy').format(parsedDueDate)}');
+      }
+
 
       Navigator.pop(context);
     }

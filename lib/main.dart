@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart' as path_provider; // Import path_provider with alias
 import 'models/debt.dart';
-import 'models/installment.dart'; // Import your Installment model
 import 'package:intl/intl.dart';
 import 'models/reminder.dart'; // Import timezone
 

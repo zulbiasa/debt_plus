@@ -128,8 +128,8 @@ class _AddDebtPageState extends State<AddDebtPage> {
           id: newDebt.key as int? ?? DateTime.now().millisecondsSinceEpoch, // Unique ID
           title: 'Debt Due Reminder : ${_nameController.text}',
           body: 'Due today RM : ${totalAmount} for ${_purposeController.text}',
-          hour: 11, // Midnight
-          minute: 8,
+          hour: 10, // Midnight
+          minute: 0,
         );
         print('Notification scheduled for due date: ${DateFormat('dd/MM/yyyy').format(parsedDueDate)}');
       }
